@@ -606,6 +606,17 @@ func cloneModelInfo(model *ModelInfo) *ModelInfo {
 	return &copyModel
 }
 
+// cloneModelInfoWithOverrides returns a private copy with local configuration
+// applied for read paths. Registration paths deliberately use cloneModelInfo
+// so clearing an override can reveal the original catalog value immediately.
+func cloneModelInfoWithOverrides(model *ModelInfo) *ModelInfo {
+	cloned := cloneModelInfo(model)
+	if cloned != nil {
+		applyModelOverride(cloned.ID, cloned)
+	}
+	return cloned
+}
+
 func cloneModelInfosUnique(models []*ModelInfo) []*ModelInfo {
 	if len(models) == 0 {
 		return nil
@@ -896,7 +907,7 @@ func (r *ModelRegistry) GetAvailableModelInfos() []*ModelInfo {
 		if !available || registration == nil || registration.Info == nil {
 			continue
 		}
-		result = append(result, cloneModelInfo(registration.Info))
+		result = append(result, cloneModelInfoWithOverrides(registration.Info))
 	}
 	sort.Slice(result, func(i, j int) bool {
 		return strings.TrimSpace(result[i].ID) < strings.TrimSpace(result[j].ID)
@@ -1075,11 +1086,11 @@ func (r *ModelRegistry) GetAvailableModelsByProvider(provider string) []*ModelIn
 
 		if effectiveClients > 0 || (availableClients > 0 && (expiredClients > 0 || cooldownSuspended > 0) && otherSuspended == 0) {
 			if entry.info != nil {
-				result = append(result, cloneModelInfo(entry.info))
+				result = append(result, cloneModelInfoWithOverrides(entry.info))
 				continue
 			}
 			if ok && registration != nil && registration.Info != nil {
-				result = append(result, cloneModelInfo(registration.Info))
+				result = append(result, cloneModelInfoWithOverrides(registration.Info))
 			}
 		}
 	}
@@ -1187,19 +1198,20 @@ func (r *ModelRegistry) GetModelInfo(modelID, provider string) *ModelInfo {
 			if reg.Providers != nil {
 				if count, ok := reg.Providers[provider]; ok && count > 0 {
 					if info, ok := reg.InfoByProvider[provider]; ok && info != nil {
-						return cloneModelInfo(info)
+						return cloneModelInfoWithOverrides(info)
 					}
 				}
 			}
 		}
 		// Fallback to global info (last registered)
-		return cloneModelInfo(reg.Info)
+		return cloneModelInfoWithOverrides(reg.Info)
 	}
 	return nil
 }
 
 // convertModelToMap converts ModelInfo to the appropriate format for different handler types
 func (r *ModelRegistry) convertModelToMap(model *ModelInfo, handlerType string) map[string]any {
+	model = cloneModelInfoWithOverrides(model)
 	if model == nil {
 		return nil
 	}
@@ -1411,13 +1423,13 @@ func (r *ModelRegistry) GetModelsForClient(clientID string) []*ModelInfo {
 		// Prefer client's own model info to preserve original type/owned_by
 		if clientInfos != nil {
 			if info, ok := clientInfos[modelID]; ok && info != nil {
-				result = append(result, cloneModelInfo(info))
+				result = append(result, cloneModelInfoWithOverrides(info))
 				continue
 			}
 		}
 		// Fallback to global registry (for backwards compatibility)
 		if reg, ok := r.models[modelID]; ok && reg.Info != nil {
-			result = append(result, cloneModelInfo(reg.Info))
+			result = append(result, cloneModelInfoWithOverrides(reg.Info))
 		}
 	}
 	return result

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/config"
+	"github.com/router-for-me/CLIProxyAPI/v7/internal/registry"
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/util"
 	"github.com/router-for-me/CLIProxyAPI/v7/internal/watcher/diff"
 	"gopkg.in/yaml.v3"
@@ -121,6 +122,10 @@ func (w *Watcher) reloadConfig() bool {
 	if oldConfig != nil && oldConfig.Debug != newConfig.Debug {
 		log.Debugf("log level updated - debug mode changed from %t to %t", oldConfig.Debug, newConfig.Debug)
 	}
+
+	// Sync local model overrides before any client reload so handlers
+	// observe the updated catalog immediately.
+	registry.SetModelOverrides(newConfig.ModelOverrides)
 
 	if oldConfig != nil {
 		details := diff.BuildConfigChangeDetails(oldConfig, newConfig)
