@@ -4,6 +4,8 @@
 // debug settings, proxy configuration, and API keys.
 package config
 
+import "github.com/router-for-me/CLIProxyAPI/v7/internal/registry"
+
 // Config represents the application's configuration, loaded from a YAML file.
 type Config struct {
 	SDKConfig `yaml:",inline"`
@@ -162,6 +164,16 @@ type Config struct {
 	// NOTE: This does not apply to existing per-credential model alias features under:
 	// gemini-api-key, interactions-api-key, codex-api-key, xai-api-key, claude-api-key, openai-compatibility, and vertex-api-key.
 	OAuthModelAlias map[string][]OAuthModelAlias `yaml:"oauth-model-alias,omitempty" json:"oauth-model-alias,omitempty"`
+
+	// ModelOverrides are user-configured local overrides applied on top of the
+	// catalog (embedded or remote-refreshed) for individual models. The map key
+	// is the model ID (e.g. "gpt-5.6-sol"); the value selects which fields to
+	// override. Fields left at their zero value are not overridden.
+	//
+	// Overrides are independent of the catalog source: the remote models.json
+	// refresh runs as usual, but local overrides win in registry-backed model
+	// metadata and model-list responses. Reloadable via config file hot-reload.
+	ModelOverrides map[string]registry.ModelOverride `yaml:"model-overrides,omitempty" json:"model-overrides,omitempty"`
 
 	// OAuthRequestScopedErrors defines per-provider request-scoped error rules applied to OAuth/file-backed auth entries.
 	// Supported channels include: vertex, aistudio, antigravity, claude, codex, kimi, xai, and OAuth plugin provider keys.

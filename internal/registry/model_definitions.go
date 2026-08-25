@@ -293,6 +293,20 @@ func cloneModelInfos(models []*ModelInfo) []*ModelInfo {
 	return out
 }
 
+// cloneModelInfosWithOverrides returns effective metadata for API read paths.
+// Static catalog getters remain raw because their output is also registration
+// input and must not permanently bake configuration overrides into the registry.
+func cloneModelInfosWithOverrides(models []*ModelInfo) []*ModelInfo {
+	if len(models) == 0 {
+		return nil
+	}
+	out := make([]*ModelInfo, len(models))
+	for i, model := range models {
+		out[i] = cloneModelInfoWithOverrides(model)
+	}
+	return out
+}
+
 // GetStaticModelDefinitionsByChannel returns static model definitions for a given channel/provider.
 // It returns nil when the channel is unknown.
 //
@@ -310,23 +324,23 @@ func GetStaticModelDefinitionsByChannel(channel string) []*ModelInfo {
 	key := strings.ToLower(strings.TrimSpace(channel))
 	switch key {
 	case "claude":
-		return GetClaudeModels()
+		return cloneModelInfosWithOverrides(GetClaudeModels())
 	case "gemini":
-		return GetGeminiModels()
+		return cloneModelInfosWithOverrides(GetGeminiModels())
 	case "gemini-interactions":
-		return GetGeminiModels()
+		return cloneModelInfosWithOverrides(GetGeminiModels())
 	case "vertex":
-		return GetGeminiVertexModels()
+		return cloneModelInfosWithOverrides(GetGeminiVertexModels())
 	case "aistudio":
-		return GetAIStudioModels()
+		return cloneModelInfosWithOverrides(GetAIStudioModels())
 	case "codex":
-		return GetCodexProModels()
+		return cloneModelInfosWithOverrides(GetCodexProModels())
 	case "kimi":
-		return GetKimiModels()
+		return cloneModelInfosWithOverrides(GetKimiModels())
 	case "antigravity":
-		return GetAntigravityModels()
+		return cloneModelInfosWithOverrides(GetAntigravityModels())
 	case "xai", "x-ai", "grok":
-		return GetXAIModels()
+		return cloneModelInfosWithOverrides(GetXAIModels())
 	default:
 		return nil
 	}
@@ -353,7 +367,7 @@ func LookupStaticModelInfo(modelID string) *ModelInfo {
 	for _, models := range allModels {
 		for _, m := range models {
 			if m != nil && m.ID == modelID {
-				return cloneModelInfo(m)
+				return cloneModelInfoWithOverrides(m)
 			}
 		}
 	}
