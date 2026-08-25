@@ -627,6 +627,9 @@ func main() {
 	redisqueue.SetRetentionSeconds(cfg.RedisUsageQueueRetentionSeconds)
 	coreauth.SetQuotaCooldownDisabled(cfg.DisableCooling)
 	coreauth.SetTransientErrorCooldownSeconds(cfg.TransientErrorCooldownSeconds)
+	// Push local model overrides into the registry; hot-reload will keep
+	// this in sync with the config file via watcher.reloadConfig.
+	registry.SetModelOverrides(cfg.ModelOverrides)
 
 	if err = logging.ConfigureLogOutput(cfg); err != nil {
 		log.Errorf("failed to configure log output: %v", err)

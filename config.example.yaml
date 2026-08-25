@@ -897,6 +897,34 @@ nonstream-keepalive-interval: 0
 #   meta:
 #     - "muse-spark-1.1"
 
+# Local model overrides
+# Per-model overrides applied on top of the catalog (embedded or
+# remote-refreshed). The key is the model ID (e.g. "gpt-5.6-sol"); the
+# value selects which fields to override. Fields left at their zero value
+# are not overridden.
+#
+# Overrides are independent of the catalog source: the remote models.json
+# refresh runs as usual, but local overrides win in registry-backed model
+# metadata and model-list responses. Reloadable via config file hot-reload
+# (no restart needed).
+#
+# For Codex template models, context_length also updates the advertised
+# context_window/max_context_window used by clients for auto-compaction. It
+# does not by itself reject oversized request payloads on the server.
+#
+# model-overrides:
+#   gpt-5.6-sol:
+#     context_length: 272000
+#   gpt-5.6-terra:
+#     context_length: 272000
+#     max_completion_tokens: 64000
+#   gpt-5.6-luna:
+#     context_length: 272000
+#     display_name: "GPT-5.6 Luna (capped)"
+#     description: "Locally advertises a 272K context window."
+#   claude-sonnet-4-6:
+#     context_length: 200000
+
 # OAuth provider request-scoped error rules (custom error classification for OAuth credentials)
 # oauth-request-scoped-errors:
 #   vertex:
